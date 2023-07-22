@@ -1,0 +1,88 @@
+#!/bin/sh
+
+if [ "$#" == 0 ]; then
+	echo "pystromo-remap wrapper"
+	echo "Usage: $0 [option] map [game]"
+	echo -e  "Options:\n\t-e\tedit map\n\t-l\tList maps in config directory"
+	exit 0
+fi
+
+path="${HOME}/.config/pystromo"
+
+while test $# -gt 0; do
+case $1 in
+	-e)
+		#Edit mode
+		edit=1
+		shift
+		;;
+	-l)
+		#List 
+		ls $path/config/*.map | xargs -n1 basename
+		exit 0
+		;;
+
+	-v*)
+		# Visual mode
+		v="$v -v"
+		shift
+		;;
+	-V)
+		# Uber visual mode
+		v="$v-vv"
+		shift
+		;;
+	*)
+		# Map or app
+		if [ ! -n "$map" ]; then
+			map=$1
+			if [ ! -f "$map" ]; then
+				map="$path/config/$map"
+			fi
+
+			echo "M: $1"
+		else
+			app=$*
+			break
+		fi
+		shift
+		;;
+esac
+done
+
+
+# Edit mode
+if [ "$edit" == 1 ]; then
+	if [ ! -f "$map" ]; then
+		# Copy contents of default.map if no file
+		default="$path/config/default.map"
+		vim $map +":r $default" +'setf dosini'
+	else
+		echo $editor $map
+		vim $map +'setf dosini'
+	fi
+	exit 0
+fi
+
+
+# Normal Mode
+if [ ! -f "$map" ]; then
+	echo "Cannot find map $map"
+	exit 1
+fi
+
+
+# Start pystromo
+if [ ! -n "$app" ]; then
+	echo $path/pystromo-remap.py $v -m $map
+	$path/pystromo-remap.py $v -m $map
+else
+	$path/pystromo-remap.py $v -m $map &
+	ps=$!
+	echo "Launching $app"
+	$app
+	# Stop pystromo-remap on exit
+	kill -KILL $ps
+fi
+
+

@@ -1,0 +1,68 @@
+# Loadout template for Nostromo n52 #
+# ctrl buttons use KEY_LEFTCTRL format
+# input a chord with: KEY_LEFTCTRL + KEY_A + 10
+# Input a sequence with: KEY_H, KEY_I
+# Can actually use a chord as the input
+# Sequences can contain pauses: integer (ms)
+# Add an integer to a chord to hold it
+# A key can cycle outputs separated by .
+# use None for non-action
+# Lights: LED_NUML, LED_CAPSL, LED_SCROLLL
+#  call to set when pressed, affix @0 or @1 to set state
+
+
+[Device:n52]
+vendor=0x050d
+product=0x0815
+
+[Map:n52]
+
+KEY_TAB:
+KEY_Q:
+KEY_W:
+KEY_E:
+KEY_R:
+
+KEY_CAPSLOCK:
+KEY_A:
+KEY_S:
+KEY_D:
+KEY_F:
+
+KEY_LEFTSHIFT:
+KEY_Z:
+KEY_X:
+KEY_C:
+
+KEY_LEFTALT:
+KEY_SPACE:
+
+# D-Pad
+KEY_LEFT:
+KEY_UP:
+KEY_RIGHT:
+KEY_DOWN:	LED_NUML
+
+# Wheel
+REL_WHEEL>:
+REL_WHEEL<:
+BTN_MIDDLE:
+
+[Map:n52 + LED_CAPSL]
+# Override for a specific mode
+
+
+# map template for Microsoft Wireless Mouse
+[Device:mouse]
+vendor=0x045e
+product=0x008c
+
+[Map:mouse]
+
+BTN_MIDDLE:
+
+BTN_SIDE:
+BTN_EXTRA:
+
+
+
