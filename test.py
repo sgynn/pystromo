@@ -11,7 +11,7 @@ fd = os.open("/dev/uinput", os.O_WRONLY | os.O_NONBLOCK);
 
 # register virtual  device
 USER_DEVICE_FORMAT = "80sHHHHi" + 'I'*64*4
-USER_DEVICE_DATA = [ "uinput test device", consts.BUS_USB, 1, 1, 4, 0, ]
+USER_DEVICE_DATA = [ b"uinput test device", consts.BUS_USB, 1, 1, 4, 0, ]
 USER_DEVICE_DATA += [0] * 64*4
 os.write(fd, struct.pack(USER_DEVICE_FORMAT, *USER_DEVICE_DATA))
 
@@ -31,15 +31,15 @@ time.sleep(0.1)
 
 
 E = events.Event
-syn     = str(E(type=consts.EV_SYN, code=0, value=0));
-keydown = str(E(type=consts.EV_KEY, code=30, value=1))
-keyup   = str(E(type=consts.EV_KEY, code=30, value=1))
+syn     = bytes(E(type=consts.EV_SYN, code=0, value=0));
+keydown = bytes(E(type=consts.EV_KEY, code=30, value=1))
+keyup   = bytes(E(type=consts.EV_KEY, code=30, value=1))
 
 
 
-print "raw:",  ' '.join("{:02x}".format(ord(c)) for c in keydown)
-print "raw:",  ' '.join("{:02x}".format(ord(c)) for c in keyup)
-print "raw:",  ' '.join("{:02x}".format(ord(c)) for c in syn)
+print("raw:",  ' '.join("{:02x}".format(c) for c in keydown))
+print("raw:",  ' '.join("{:02x}".format(c) for c in keyup))
+print("raw:",  ' '.join("{:02x}".format(c) for c in syn))
 
 os.write(fd, keydown);
 os.write(fd, syn);

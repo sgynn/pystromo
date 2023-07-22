@@ -1,13 +1,13 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # Some unit tests for stuff
 
-import mapping
+from lib import mapping
 
 def test(expression, message=None):
 	if not message:
 		message = expression
 	if not eval(expression):
-		print 'FAILED: %s' % message
+		print('FAILED: %s' % message)
 
 
 # Key objects
@@ -22,7 +22,7 @@ chord_ba = mapping.KeyChord((key_b, key_a))
 chord_bigx = mapping.KeyChord((key_bigx,))
 
 def runTests():
-	print 'Testing Pystromo:'
+	print('Testing Pystromo:')
 	# Key containment
 	test('key_midx in key_bigx')
 	test('key_midx in key_midx')
@@ -38,7 +38,7 @@ def runTests():
 	test('key_bigx in chord_bigx')
 	test('key_outerx not in chord_bigx')
 	
-	print 'Done'
+	print('Done')
 	
 
 

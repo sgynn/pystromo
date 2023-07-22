@@ -547,7 +547,7 @@ class KeyChord (tuple):
 		return True
 	
 	def __hash__(self):
-		return hash((super.__hash__(self), self.value, self.min, self.max))
+		return hash(tuple(self))
 	
 	def deepcopy(self, *args, **kwargs):
 		# Chords only contain keys
