@@ -13,7 +13,7 @@ import fcntl
 import struct
 import time
 
-import constants as const
+from . import constants as const
 
 
 def getInputNodes ():
@@ -30,7 +30,7 @@ def getInputNodes ():
 				fd = IONode(node)
 			except OSError:
 				#info = sys.exc_info()
-				#print 'Unable to open %s: %s' % (event, str(info[1]))
+				#print('Unable to open %s: %s' % (event, str(info[1])))
 				continue
 			devices.append(fd)
 			
@@ -79,10 +79,10 @@ class IONode (object):
 			The fd can either be a string filename, an integer file-number,
 			or an object with a fileno method.
 		"""
-		if isinstance(fd, (int, long)):
+		if isinstance(fd, int):
 			# This is good
 			pass
-		elif isinstance(fd, basestring):
+		elif isinstance(fd, str) or isinstance(fd, bytes):
 			fd = self._open(fd)
 		else:
 			fd = fd.fileno()
@@ -123,7 +123,7 @@ class IONode (object):
 			return os.read(self.fd, length)
 		except OSError:
 			# No data to read - probably...
-			return ''
+			return b''
 		
 	
 	def write(self, data):
@@ -151,7 +151,7 @@ class IONode (object):
 		# Even though we remove null characters, some devices
 		# (I'm looking at you "Honey Bee  Nostromo SpeedPad2 ")
 		# may have trailing spaces in the device name.
-		return name.strip('\0')
+		return name.strip(b'\0')
 		
 	
 	def getAbsStatus (self, code):
@@ -193,7 +193,7 @@ class IONode (object):
 		for valueNum, value in enumerate(values):
 			if not value:
 				continue
-			for bit in xrange(valueSize * 8):
+			for bit in range(valueSize * 8):
 				# The smallest bit of the value indicates support for a code.
 				if value & 1:
 					codes.append(bit + (8 * valueSize * valueNum))
@@ -231,7 +231,7 @@ class OutputNode (IONode):
 			try:
 				self.fd = self._open(loc)
 			except OSError as e:
-				if e.errno == 13: print "Permission denied - Make sure rules file is in /etc/udev/rules.d"
+				if e.errno == 13: print("Permission denied - Make sure rules file is in /etc/udev/rules.d")
 				continue
 			# Successfully opened, so we use this one
 			break
@@ -272,7 +272,7 @@ class OutputNode (IONode):
 		USER_DEVICE_FORMAT = "80sHHHHi" + 'I'*64*4
 		# These are: device name, bus type, vendor, product, version, ff_effects_max
 		USER_DEVICE_DATA = [
-				"Pystromo Input Remapper",
+				b"Pystromo Input Remapper",
 				const.BUS_USB,
 				1,
 				1,

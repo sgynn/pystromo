@@ -3,7 +3,7 @@
 """
 
 import os.path
-from ConfigParser import SafeConfigParser as _ConfParser
+from configparser import SafeConfigParser as _ConfParser
 
 
 class _BaseConfig (object):
@@ -46,7 +46,7 @@ class _BaseConfig (object):
 		if len(found) < len(filenames):
 			for file in filenames:
 				if file not in found:
-					print 'WARNING: Unable to load "%s"' % file
+					print('WARNING: Unable to load "%s"' % file)
 		
 	
 	def reload (self):
@@ -82,7 +82,7 @@ class MonitorConfig (_BaseConfig):
 			try:
 				fd = open(file)
 			except IOError:
-				print 'WARNING: Unable to load "%s"' % file
+				print('WARNING: Unable to load "%s"' % file)
 				continue
 			
 			for line in fd.readlines():
@@ -98,7 +98,7 @@ class MonitorConfig (_BaseConfig):
 				try:
 					process, conf = line.split('=')
 				except ValueError:
-					print 'WARNING: Invalid config line "%s"' % line
+					print('WARNING: Invalid config line "%s"' % line)
 					continue
 				
 				if process.strip() == '*':

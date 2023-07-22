@@ -3,12 +3,12 @@
 """
 
 import time
-import ioctl
 import select
 
-import events
-import mapping
-import constants as const
+from . import ioctl
+from . import events
+from . import mapping
+from . import constants as const
 
 # This is a list of all the devices which have been created.
 # We use this for the receive() function.
@@ -104,10 +104,10 @@ class InputDevice (object):
 			## We will receive events for every LED affected. Problem?
 			if const.EV_LED in node.events:
 				for led in node.events[const.EV_LED]:
-					node.write(str(events.Event(type=const.EV_LED, code=led, value=0)))
+					node.write(bytes(events.Event(type=const.EV_LED, code=led, value=0)))
 			
 		# Make room for any partial data we get from our nodes
-		self._partialReadData = dict(zip(nodes, [''] * len(nodes)))
+		self._partialReadData = dict(zip(nodes, [b''] * len(nodes)))
 		
 		if nodes and id is None:
 			# Use the name of the first node.
@@ -188,7 +188,7 @@ class InputDevice (object):
 					events.append(event)
 				
 				bytesToRead = eventSize
-				data = ''
+				data = b''
 				
 			
 		return events
@@ -313,7 +313,7 @@ class InputDevice (object):
 				oldCombo = remap(self._pressed.values(), modes=modes)
 				
 			elif key.string in self._absolute:
-				withAbs = self._pressed.values()
+				withAbs = list(self._pressed.values())
 				withAbs.append (self._absolute[key.string])
 				oldCombo = remap(withAbs, modes=modes)
 				
@@ -483,7 +483,7 @@ class InputDevice (object):
 		"""
 		newCombo = tuple()
 		for key in combo:
-			if isinstance(key, (int, long)):
+			if isinstance(key, int): # time delay
 				continue
 			newCombo += (key,)
 			
@@ -498,9 +498,10 @@ class InputDevice (object):
 		relay = self._relayCombo
 		
 		events = []
+		remove = []
 		for cycle, iterator in self._queue.items():
 			if len(iterator.sequence) == 1:
-				combo = iterator.next()
+				combo = next(iterator)
 				
 				if combo:
 					if cycle in self._starting:
@@ -526,15 +527,15 @@ class InputDevice (object):
 					
 				
 				# Unitary sequences don't repeat
-				del(self._queue[cycle])
+				remove.append(cycle)
 				
 			else:
 				# If a sequence is more than one element long, we loop it.
 				try:
-					combo = iterator.next()
+					combo = next(iterator)
 				except StopIteration:
 					# It's over. Let it go. Move on.
-					del(self._queue[cycle])
+					remove.append(cycle)
 					self._ending.discard(cycle)
 					continue
 				
@@ -550,7 +551,7 @@ class InputDevice (object):
 						# Unvalued combos are KEYUPped
 						events.extend(relay(tuple(reversed(combo)), const.KEYUP))
 					
-			
+		for cycle in remove: del(self._queue[cycle])
 		return events
 		
 	
@@ -567,9 +568,9 @@ class InputDevice (object):
 		# though we could make it cumulative.
 		delay = 0
 		newCombo = tuple()
-		for index in xrange(0, len(combo)):
+		for index in range(0, len(combo)):
 			key = combo[index]
-			if isinstance(key, (int, long)):
+			if isinstance(key, int):
 				delay = key / 1000.0
 			else:
 				newCombo += (key,)
@@ -624,11 +625,11 @@ class InputDevice (object):
 			if event.code not in node.events[event.type]:
 				continue
 			# Found the right node for the job
-			node.write(str(event))
+			node.write(bytes(event))
 			break
 		else:
 			# No nodes will accept this event
-			print "Unsupported event: %s" % repr(event)
+			print("Unsupported event: %s" % repr(event))
 			#raise LookupError ('unsupported event: %s' % repr(event))
 		
 	
@@ -648,7 +649,8 @@ class InputDevice (object):
 			iterator.repeat = False
 		
 		# Make sure any held-down keys are 'released'
-		for key in self._pressed.values():
+		pressed = list(self._pressed.values())
+		for key in pressed:
 			self._stopEvent(key)
 		
 	
@@ -688,10 +690,10 @@ class OutputDevice (object):
 		now = time.time()
 		for event in list(self._queue):
 			if event.timestamp < now:
-				r = self.node.write(str(event))
+				r = self.node.write(bytes(event))
 				# Send a SYN event with each one too
 				# This is needed for EV_REL events, at the very least.
-				self.node.write(str(self.Event(type=const.EV_SYN)))
+				self.node.write(bytes(self.Event(type=const.EV_SYN)))
 				self._queue.remove(event)
 				
 		

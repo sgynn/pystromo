@@ -5,7 +5,7 @@
 import time
 import struct
 
-import constants as const
+from . import constants as const
 
 
 class Event (object):
@@ -67,7 +67,7 @@ class Event (object):
 		return '<%s timestamp=%r, type=%r, code=%r, value=%r>' % params
 		
 	
-	def __str__ (self):
+	def __bytes__ (self):
 		return self.raw
 	
 	def pack (self):

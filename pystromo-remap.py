@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 """
 	Takes input from items of (USB) hardware,
 	and remaps the keystrokes to something else.
@@ -50,7 +50,7 @@ options, args = optParser.parse_args()
 # Set up output device
 output = devices.OutputDevice()
 if options.verbose:
-	print 'Using output: %s' % str(output)
+	print('Using output: %s' % str(output))
 
 # Grabbing the input devices are handled on the first main-loop iteration.
 
@@ -60,9 +60,9 @@ def loadMappings ():
 	"""
 	global options
 	if options.verbose:
-		print 'Loading mappings'
+		print('Loading mappings')
 		if options.verbose > 1:
-			print '; '.join(options.maps)
+			print('; '.join(options.maps))
 	
 	if options.maps:
 		return mapping.Mapper(*options.maps)
@@ -94,12 +94,12 @@ def getInputs(keymap, output):
 		The output parameter will be passed through to the InputDevice.
 	"""
 	inputs = []
-	for device, params in keymap.devices.iteritems():
+	for device, params in keymap.devices.items():
 		dev = devices.InputDevice(id=device, keymap=keymap, output=output, **params)
 		inputs.append(dev)
 		
 		if options.verbose:
-			print 'Using device: %s' % str(dev)
+			print('Using device: %s' % str(dev))
 	return inputs
 
 def releaseInputs(inputs):
@@ -168,6 +168,7 @@ while looping:
 		releaseInputs(inputs)
 		keymap = loadMappings()
 		inputs = getInputs(keymap, output)
+		if not inputs: break
 		loadConfig = False
 	
 	busyDevices = list(device for device in inputs if device.busy)
@@ -194,14 +195,14 @@ while looping:
 	
 	if options.verbose > 1:
 		for event in events:
-			print 'Incoming event: %s' % repr(event)
+			print('Incoming event: %s' % repr(event))
 	
 	for device in busyDevices:
 		events = device.process()
 		
 		if options.verbose > 2:
 			for event in events:
-				print 'Outgoing event: %s' % repr(event)
+				print('Outgoing event: %s' % repr(event))
 		
 	
 	# Actually push the events to the uinput device

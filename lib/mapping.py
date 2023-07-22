@@ -4,8 +4,8 @@
 
 import time
 
-from config import _BaseConfig
-import constants as const
+from .config import _BaseConfig
+from . import constants as const
 
 class Mapper (_BaseConfig):
 	"""
@@ -55,7 +55,7 @@ class Mapper (_BaseConfig):
 			If modes is specifed, it should be a set of mode key-strings
 			and will be required to be a superset of an mapping modes.
 		"""
-		if isinstance(key, basestring):
+		if isinstance(key, bytes):
 			key = Key(key)
 		
 		if device not in self.mappings:
@@ -70,10 +70,10 @@ class Mapper (_BaseConfig):
 		
 		if isinstance(key, Key):
 			# Search the given device for a mapping which contains the key
-			for mode, modeMappings in mappings.iteritems():
+			for mode, modeMappings in mappings.items():
 				if modes is not None and not modes.issuperset(mode):
 					continue
-				for input in modeMappings.iterkeys():
+				for input in modeMappings.keys():
 					if key in input:
 						return True
 			
@@ -111,6 +111,7 @@ class Mapper (_BaseConfig):
 			Loads in and parses out configuration and mapping data from the
 			given list of filenames.
 		"""
+
 		_BaseConfig.load(self, filenames)
 		
 		for section in self._parser.sections():
@@ -229,14 +230,14 @@ class Mapper (_BaseConfig):
 			if no entry matches.
 		"""
 		# Work out the order in which to check modes
-		mapModes = mapDict.keys()
+		mapModes = list(mapDict.keys())
 		mapModes.sort(key=len, reverse=True)
 		# Reformat the passed-in list of modes
 		modes = set(getattr(const, string) for string in modes)
 		for mode in mapModes:
 			if modes.issuperset(mode):
 				# The required modes are all present
-				for input, output in mapDict[mode].iteritems():
+				for input, output in mapDict[mode].items():
 					if input == chord:
 						return output
 		
@@ -285,9 +286,10 @@ class ReMapping (object):
 		if isinstance(string, Key):
 			# Not actually a string, just a single key
 			return KeyCycle([KeySequence([KeyCombo([string])])])
-
-                # Remove inline comment
-                string = string.split('#',1)[0]
+		
+		# Remove inline comment
+		string = string.split('#',1)[0]
+		string = string.split(';',1)[0]
 		
 		result = []
 		cycleStrings = string.upper().split('.')
@@ -445,6 +447,8 @@ class Key (object):
 		except AttributeError:
 			return NotImplemented
 		
+	def __lt__(self, other):
+		return self._string < other._string
 	
 	def __contains__ (self, other):
 		"""
@@ -541,7 +545,9 @@ class KeyChord (tuple):
 			if key not in self:
 				return False
 		return True
-		
+	
+	def __hash__(self):
+		return hash((super.__hash__(self), self.value, self.min, self.max))
 	
 	def deepcopy(self, *args, **kwargs):
 		# Chords only contain keys
@@ -607,7 +613,7 @@ class KeySequence (tuple):
 	def __str__ (self):
 		output = []
 		for combo in tuple.__iter__(self):
-			if combo is None or isinstance(combo, (int, long)):
+			if combo is None or isinstance(combo, int):
 				output.append(str(combo))
 			else:
 				output.append('+'.join(str(key) for key in combo))
@@ -697,38 +703,28 @@ class SequenceIterator (object):
 		self.repeat = True
 		# This is the number of the loop we're on
 		self.count = 0
-		
-		# Make our next method the generator's next!
-		## There must be a better way of making an iterator's next method!
-		self.next = self.next().next
-		
+		self.index = -1
+		self.nextTime = 0
 	
 	def __iter__ (self):
 		return self
-		
 	
-	def next (self):
-		getTime = time.time
-		sequence = self.sequence
-		
-		# We do this, rather than while self.repeat, to loop at least once.
-		while True:
+	def __next__(self):
+		if self.nextTime and time.time() < self.nextTime:
+			return None
+
+		self.index = (self.index + 1) % len(self.sequence)
+		if self.index == 0:
 			self.count += 1
-			## BUG: If we are a tuple of only very small (~1) numerical
-			## values, we may loop forever without yielding anything!
-			for item in tuple.__iter__(sequence):
-				if isinstance(item, (int, long)):
-					# Pause for the desired amount of time before moving on.
-					nextTime = getTime() + (item / 1000.0)
-					while getTime() < nextTime:
-						yield None
-				else:
-					yield item
-				
-			
-			if not self.repeat:
-				break
-			
-		raise StopIteration
-		
-	
+			if self.count > 1 and not self.repeat:
+				raise StopIteration
+
+		item = self.sequence[self.index]
+
+		if isinstance(item, int):
+			self.nextTime = time.time() + (item / 1000.0)
+			return None
+
+		self.nextTime = 0
+		return item
+

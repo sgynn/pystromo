@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 """
 	Script which monitors the state of the system's running processes,
 	starting and stopping the input-remapper script when needed.
@@ -104,12 +104,12 @@ def getProcesses (processes, allUsers=False):
 	ps = subprocess.Popen(command, stdout=subprocess.PIPE).communicate()[0]
 	
 	running = {}
-	for line in ps.split('\n'):
+	for line in ps.split(b'\n'):
 		line = line.strip()
 		if not line:
 			continue
 		
-		pid, cmd = line.split(' ', 1)
+		pid, cmd = line.split(b' ', 1)
 		
 		# Each entry in the processes list is a *subpattern*.
 		for proc in processes:
@@ -131,11 +131,10 @@ while looping:
 	# Load the config file if needed
 	if loadConf:
 		if options.verbose:
-			print 'Loading configuration file'
+			print('Loading configuration file')
 		conf = loadConfig()
 		# Update what to look out for
-		processes = set(proc for proc, filename in conf.mappings)
-		processes.discard(None)
+		processes = set(bytes(proc, encoding='utf-8') for proc, filename in conf.mappings if proc)
 		lastProcs = None
 		
 		loadConf = False
@@ -150,7 +149,7 @@ while looping:
 			proc, filename = mapping
 			filename = os.path.expanduser(filename)
 			
-			if proc is None or proc in running:
+			if proc is None or bytes(proc, encoding='utf-8') in running:
 				files.append(filename)
 			
 		
@@ -163,7 +162,7 @@ while looping:
 			
 			# Notify of stoppage only if there's no imminent startage.
 			if options.verbose and not files:
-				print 'STOPPED'
+				print('STOPPED')
 		
 		
 		# We only start the daemon if we've got some mapping files.
@@ -175,7 +174,7 @@ while looping:
 				command.append('-R')
 			
 			if options.verbose:
-				print ' '.join(command)
+				print(' '.join(command))
 			
 			daemonProcess = subprocess.Popen(command)
 			
@@ -201,3 +200,4 @@ while looping:
 if daemonProcess:
 	os.kill(daemonProcess.pid, signal.SIGINT)
 	daemonProcess.wait()
+
